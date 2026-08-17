@@ -1,0 +1,30 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add EC2 to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+    - name: Deploy Application to EC2
+      # This step copies the files to the server (rsync) and then connects and runs the application (e.g. with Docker)
+      run: |
+        rsync -avz --exclude='.git' --exclude='.github' ./ ubuntu@${{ secrets.EC2_PUBLIC_IP }}:~/app/
+        ssh ubuntu@${{ secrets.EC2_PUBLIC_IP }} "cd ~/app && docker-compose up -d --build"
