@@ -35,6 +35,6 @@ jobs:
           
           sudo docker-compose down
           sudo docker-compose build
-          
+          sudo docker-compose --env-file .env run --rm web python manage.py migrate
           sudo docker-compose --env-file .env up -d
         EOF
