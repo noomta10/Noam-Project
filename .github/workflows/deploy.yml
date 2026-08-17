@@ -26,5 +26,19 @@ jobs:
     - name: Deploy Application to EC2
       # This step copies the files to the server (rsync) and then connects and runs the application (e.g. with Docker)
       run: |
+        # 1. copies the files to the server
         rsync -avz --exclude='.git' --exclude='.github' ./ ubuntu@${{ secrets.EC2_PUBLIC_IP }}:~/app/
-        ssh ubuntu@${{ secrets.EC2_PUBLIC_IP }} "cd ~/app && docker-compose up -d --build"
+        
+        # 2. Connecting to the server, installing Docker, and running the application
+        ssh ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          
+          # Start Docker
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          
+          # Entering the application folder and running it with administrator privileges
+          cd ~/app
+          sudo docker-compose up -d --build
+        EOF
